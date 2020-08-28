@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import datetime
+import urllib
 
 st.title("Export de tabela")
 
@@ -35,14 +36,14 @@ df = pd.melt(df, id_vars=["index"]).rename(
 )
 
 selected_columns = st.multiselect(
-    "Escolhe colunas", list(df.columns)#, ["year"]
+    "Escolhe colunas", list(df.columns), ["year"]
 )
 # if not selected_columns:
 #     st.error("Please select at least one column.")
 #     #return
 
 selected_rows = st.multiselect(
-    "Escolhe linhas", list(df.columns)#, ["Region"]
+    "Escolhe linhas", list(df.columns), ["Region"]
 )
 # if not selected_rows:
 #     st.error("Please select at least one row.")
