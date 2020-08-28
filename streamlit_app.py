@@ -4,7 +4,7 @@ import altair as alt
 import datetime
 import urllib
 import base64
-import openpyxl
+#import openpyxl
 import xlsxwriter
 from io import BytesIO
 from flask import send_file
