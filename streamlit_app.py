@@ -3,6 +3,11 @@ import pandas as pd
 import altair as alt
 import datetime
 import urllib
+import base64
+import openpyxl
+import xlsxwriter
+from io import BytesIO
+from flask import send_file
 
 st.title("Export de tabela")
 
@@ -49,27 +54,61 @@ selected_rows = st.multiselect(
 #     st.error("Please select at least one row.")
 #     #return
 
-data = df#.loc[countries]
-#data /= 1000000.0
-#data = data.T.reset_index()
-data = data.pivot(
+df = df#.loc[countries]
+#df /= 1000000.0
+#df = df.T.reset_index()
+df = df.pivot(
     index=selected_rows,
     columns=selected_columns,
     values="Gross Agricultural Product ($B)"
 )
-if st.button('Exportar Excel'):
-    df.to_excel(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx')
-if st.button('Exportar CSV'):
-    df.to_csv(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.csv')
-st.write("### Dados", data.sort_index())
+#if st.button('Exportar Excel'):
+    #df.to_excel(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx')
+    
+    # output = BytesIO()
+    # writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    # df.to_excel(writer, sheet_name='Sheet1')
+    # writer.save()
+    # output.seek(0)
+    # send_file(output, attachment_filename='Export_Orbita.xlsx', as_attachment=True)
+#if st.button('Exportar CSV'):
+#    df.to_csv(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.csv')
 
+def get_table_download_link_csv(df):
+    """Generates a link allowing the data in a given panda dataframe to be downloaded
+    in:  dataframe
+    out: href string
+    """
+    csv = df.to_csv()
+    b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
+    href = f'<a href="data:file/csv;base64,{b64}" download="Export_Orbita.csv">Download CSV file</a>'
+    return href
 
-# data = data.T.reset_index()
-# data = pd.melt(data, id_vars=["index"]).rename(
+def get_table_download_link_xlsx(df):
+    """Generates a link allowing the data in a given panda dataframe to be downloaded
+    in:  dataframe
+    out: href string
+    """
+
+    writer = pd.ExcelWriter('.', engine='xlsxwriter')
+    df.to_excel('Export_Orbita.xlsx', engine='xlsxwriter')
+    # b64 = base64.b64encode(xlsx_file.encode()).decode()  # some strings <-> bytes conversions necessary here
+    #href = f'<a href="data:file/xlsx;base64,{b64}" download="Export_Orbita.xlsx">Download Excel file</a>'
+
+    href = '<a href="Export_Orbita.xlsx" target="_blank" download="Export_Orbita.xlsx">Download Excel file</a>'
+    return href
+
+st.markdown(get_table_download_link_csv(df), unsafe_allow_html=True)
+#st.markdown(get_table_download_link_xlsx(df), unsafe_allow_html=True)
+
+st.write("### Dados", df.sort_index())
+
+# df = df.T.reset_index()
+# df = pd.melt(df, id_vars=["index"]).rename(
 #     columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
 # )
 # chart = (
-#     alt.Chart(data)
+#     alt.Chart(df)
 #     .mark_area(opacity=0.3)
 #     .encode(
 #         x="year:T",
