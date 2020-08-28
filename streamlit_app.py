@@ -6,8 +6,8 @@ import urllib
 import base64
 #import openpyxl
 #import xlsxwriter
-from io import BytesIO
-from flask import send_file
+#from io import BytesIO
+#from flask import send_file
 
 st.title("Export de tabela")
 
