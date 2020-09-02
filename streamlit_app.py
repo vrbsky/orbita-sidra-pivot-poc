@@ -4,6 +4,10 @@ import altair as alt
 import datetime
 import urllib
 import base64
+import requests
+from io import StringIO, BytesIO
+import base64
+
 #import openpyxl
 #import xlsxwriter
 #from io import BytesIO
@@ -11,14 +15,28 @@ import base64
 
 st.title("Export de tabela")
 
-@st.cache
+#@st.cache
 def get_UN_data():
     AWS_BUCKET_URL = "https://streamlit-demo-data.s3-us-west-2.amazonaws.com"
     df = pd.read_csv(AWS_BUCKET_URL + "/agri.csv.gz")
     return df.set_index("Region")
 
+def get_SIDRA_POC_table01_google_drive():
+    #return pd.read_csv('https://drive.google.com/file/d/1poUgFZBahCC7QmQX_hgVuZ7D-emxLnQD/view', error_bad_lines=False)
+    orig_url='https://drive.google.com/file/d/1poUgFZBahCC7QmQX_hgVuZ7D-emxLnQD/view'
+
+    file_id = orig_url.split('/')[-2]
+    dwn_url='https://drive.google.com/uc?export=download&id=' + file_id
+    url = requests.get(dwn_url).text
+    csv_raw = StringIO(url)
+    return pd.read_csv(csv_raw, error_bad_lines=False)
+
+def get_SIDRA_POC_table02():
+    return pd.read_csv('data_mock/silver_tesourotransparente_transferencias-constitucionais-para-municipios_Transferencia_Mensal_Municipios_mes03.csv', sep=';')
+
 try:
-    df = get_UN_data()
+    #df = get_UN_data()
+    df = get_SIDRA_POC_table02()
 except urllib.error.URLError as e:
     st.error(
         """
@@ -35,35 +53,39 @@ st.markdown(
 Selecione as colunas e linhas
 """)
 
-df = df.T.reset_index()
-df = pd.melt(df, id_vars=["index"]).rename(
-    columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
-)
+#df = df.T.reset_index()
+#df = pd.melt(df, id_vars=["index"]).rename(
+#    columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
+#)
+
+available_rows_columns = ['ano', 'mes', 'uf', 'municipio', 'transferencia', 'item transferencia']
+value = '1o decendio'
 
 selected_columns = st.multiselect(
-    "Escolhe colunas", list(df.columns), ["year"]
+    "Escolhe colunas", available_rows_columns#list(df.columns)#, [df.columns[0]]
 )
 # if not selected_columns:
 #     st.error("Please select at least one column.")
 #     #return
 
 selected_rows = st.multiselect(
-    "Escolhe linhas", list(df.columns), ["Region"]
+    "Escolhe linhas", available_rows_columns#list(df.columns)#, [df.columns[1]]
 )
 # if not selected_rows:
 #     st.error("Please select at least one row.")
 #     #return
 
-df = df#.loc[countries]
+df = df[selected_columns+selected_rows+[value]]
 #df /= 1000000.0
 #df = df.T.reset_index()
-df = df.pivot(
-    index=selected_rows,
-    columns=selected_columns,
-    values="Gross Agricultural Product ($B)"
+df_pivot = df[selected_columns+selected_rows+['1o decendio']].pivot(
+     index=selected_rows,
+     columns=selected_columns,
+     values="1o decendio"
 )
+
 #if st.button('Exportar Excel'):
-    #df.to_excel(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx')
+    # df.to_excel(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx')
     
     # output = BytesIO()
     # writer = pd.ExcelWriter(output, engine='xlsxwriter')
@@ -81,7 +103,7 @@ def get_table_download_link_csv(df):
     """
     csv = df.to_csv()
     b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
-    href = f'<a href="data:file/csv;base64,{b64}" target="_blank" download="Export_Orbita.csv">Download CSV file</a>'
+    href = f'<a href="data:file/csv;base64,{b64}" target="_blank" download="Export_Orbita.csv">Baixar CSV</a>'
     return href
 
 def get_table_download_link_xlsx(df):
@@ -98,10 +120,42 @@ def get_table_download_link_xlsx(df):
     href = '<a href="Export_Orbita.xlsx" target="_blank" download="Export_Orbita.xlsx">Download Excel file</a>'
     return href
 
-st.markdown(get_table_download_link_csv(df), unsafe_allow_html=True)
-#st.markdown(get_table_download_link_xlsx(df), unsafe_allow_html=True)
+def send_excel2(df):
+    strIO = BytesIO()
+    excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
+    df.to_excel(excel_writer, sheet_name="sheet1")
+    excel_writer.save()
+    excel_data = strIO.getvalue()
+    strIO.seek(0)
 
-st.write("### Dados", df.sort_index())
+    return send_file(strIO,
+                     attachment_filename='Export_Orbita.xlsx',
+                     as_attachment=True)
+
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, sheet_name='Sheet1')
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
+
+def get_table_download_link_xlsx2(df):
+    """Generates a link allowing the data in a given panda dataframe to be downloaded
+    in:  dataframe
+    out: href string
+    """
+    val = to_excel(df)
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="Export_Orbita.xlsx">Baixar XLSX</a>' # decode b'abc' => abc
+
+if st.button('Gerar CSV'):
+    st.markdown(get_table_download_link_csv(df_pivot), unsafe_allow_html=True)
+if st.button('Gerar XLSX'):
+    st.markdown(get_table_download_link_xlsx2(df_pivot), unsafe_allow_html=True)
+
+#st.write("### Dados", df.head(20))
+st.write("### Dados", df_pivot.head(20))
 
 # df = df.T.reset_index()
 # df = pd.melt(df, id_vars=["index"]).rename(
