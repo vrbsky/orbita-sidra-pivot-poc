@@ -14,6 +14,7 @@ import base64
 #from flask import send_file
 
 st.title("Export de tabela")
+st.info('v0.2.1')
 
 #@st.cache
 def get_UN_data():
@@ -171,5 +172,3 @@ st.write("### Dados", df_pivot.head(20))
 #     )
 # )
 # st.altair_chart(chart, use_container_width=True)
-
-st.info('v0.2')
