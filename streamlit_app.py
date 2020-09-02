@@ -171,3 +171,5 @@ st.write("### Dados", df_pivot.head(20))
 #     )
 # )
 # st.altair_chart(chart, use_container_width=True)
+
+st.info('v0.2')
