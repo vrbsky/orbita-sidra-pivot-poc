@@ -14,7 +14,7 @@ import base64
 #from flask import send_file
 
 st.title("Export de tabela")
-st.info('v0.2.1')
+st.markdown('v0.2.3')
 
 #@st.cache
 def get_UN_data():
@@ -59,8 +59,10 @@ Selecione as colunas e linhas
 #    columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
 #)
 
-available_rows_columns = ['ano', 'mes', 'uf', 'municipio', 'transferencia', 'item transferencia']
+available_rows_columns = ['ano', 'uf', 'municipio', 'transferencia', 'item transferencia']
 value = '1o decendio'
+#selected_columns = []
+#selected_rows = []
 
 selected_columns = st.multiselect(
     "Escolhe colunas", available_rows_columns#list(df.columns)#, [df.columns[0]]
@@ -76,99 +78,117 @@ selected_rows = st.multiselect(
 #     st.error("Please select at least one row.")
 #     #return
 
-df = df[selected_columns+selected_rows+[value]]
-#df /= 1000000.0
-#df = df.T.reset_index()
-df_pivot = df[selected_columns+selected_rows+['1o decendio']].pivot(
-     index=selected_rows,
-     columns=selected_columns,
-     values="1o decendio"
-)
+valid_config = True
 
-#if st.button('Exportar Excel'):
-    # df.to_excel(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx')
+complement = set(available_rows_columns)-set(selected_columns+selected_rows)
+if len(complement) > 0:
+    st.markdown(f"""#### Atributos a escolher
+{', '.join(complement)}
+""")
+    valid_config = False
+
+intersection = set(selected_columns).intersection(set(selected_rows))
+if len(intersection) > 0:
+    st.markdown(f"""#### Atributos não podem ser escolhidos como coluna e linha ao mesmo tempo
+{', '.join(intersection)}
+""")
+    valid_config = False
+
     
-    # output = BytesIO()
-    # writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    # df.to_excel(writer, sheet_name='Sheet1')
-    # writer.save()
-    # output.seek(0)
-    # send_file(output, attachment_filename='Export_Orbita.xlsx', as_attachment=True)
-#if st.button('Exportar CSV'):
-#    df.to_csv(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.csv')
+if valid_config:
+    df = df[selected_columns+selected_rows+[value]]
+    #df /= 1000000.0
+    #df = df.T.reset_index()
+    df_pivot = df[selected_columns+selected_rows+['1o decendio']].pivot(
+        index=selected_rows,
+        columns=selected_columns,
+        values="1o decendio"
+    )
 
-def get_table_download_link_csv(df):
-    """Generates a link allowing the data in a given panda dataframe to be downloaded
-    in:  dataframe
-    out: href string
-    """
-    csv = df.to_csv()
-    b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
-    href = f'<a href="data:file/csv;base64,{b64}" target="_blank" download="Export_Orbita.csv">Baixar CSV</a>'
-    return href
+    #if st.button('Exportar Excel'):
+        # df.to_excel(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx')
+        
+        # output = BytesIO()
+        # writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        # df.to_excel(writer, sheet_name='Sheet1')
+        # writer.save()
+        # output.seek(0)
+        # send_file(output, attachment_filename='Export_Orbita.xlsx', as_attachment=True)
+    #if st.button('Exportar CSV'):
+    #    df.to_csv(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.csv')
 
-def get_table_download_link_xlsx(df):
-    """Generates a link allowing the data in a given panda dataframe to be downloaded
-    in:  dataframe
-    out: href string
-    """
+    def get_table_download_link_csv(df):
+        """Generates a link allowing the data in a given panda dataframe to be downloaded
+        in:  dataframe
+        out: href string
+        """
+        csv = df.to_csv()
+        b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
+        href = f'<a href="data:file/csv;base64,{b64}" target="_blank" download="Export_Orbita.csv">Baixar CSV</a>'
+        return href
 
-    writer = pd.ExcelWriter('.', engine='xlsxwriter')
-    df.to_excel('Export_Orbita.xlsx', engine='xlsxwriter')
-    # b64 = base64.b64encode(xlsx_file.encode()).decode()  # some strings <-> bytes conversions necessary here
-    #href = f'<a href="data:file/xlsx;base64,{b64}" download="Export_Orbita.xlsx">Download Excel file</a>'
+    def get_table_download_link_xlsx(df):
+        """Generates a link allowing the data in a given panda dataframe to be downloaded
+        in:  dataframe
+        out: href string
+        """
 
-    href = '<a href="Export_Orbita.xlsx" target="_blank" download="Export_Orbita.xlsx">Download Excel file</a>'
-    return href
+        writer = pd.ExcelWriter('.', engine='xlsxwriter')
+        df.to_excel('Export_Orbita.xlsx', engine='xlsxwriter')
+        # b64 = base64.b64encode(xlsx_file.encode()).decode()  # some strings <-> bytes conversions necessary here
+        #href = f'<a href="data:file/xlsx;base64,{b64}" download="Export_Orbita.xlsx">Download Excel file</a>'
 
-def send_excel2(df):
-    strIO = BytesIO()
-    excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
-    df.to_excel(excel_writer, sheet_name="sheet1")
-    excel_writer.save()
-    excel_data = strIO.getvalue()
-    strIO.seek(0)
+        href = '<a href="Export_Orbita.xlsx" target="_blank" download="Export_Orbita.xlsx">Download Excel file</a>'
+        return href
 
-    return send_file(strIO,
-                     attachment_filename='Export_Orbita.xlsx',
-                     as_attachment=True)
+    def send_excel2(df):
+        strIO = BytesIO()
+        excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
+        df.to_excel(excel_writer, sheet_name="sheet1")
+        excel_writer.save()
+        excel_data = strIO.getvalue()
+        strIO.seek(0)
 
-def to_excel(df):
-    output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    df.to_excel(writer, sheet_name='Sheet1')
-    writer.save()
-    processed_data = output.getvalue()
-    return processed_data
+        return send_file(strIO,
+                        attachment_filename='Export_Orbita.xlsx',
+                        as_attachment=True)
 
-def get_table_download_link_xlsx2(df):
-    """Generates a link allowing the data in a given panda dataframe to be downloaded
-    in:  dataframe
-    out: href string
-    """
-    val = to_excel(df)
-    b64 = base64.b64encode(val)  # val looks like b'...'
-    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="Export_Orbita.xlsx">Baixar XLSX</a>' # decode b'abc' => abc
+    def to_excel(df):
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1')
+        writer.save()
+        processed_data = output.getvalue()
+        return processed_data
 
-if st.button('Gerar CSV'):
-    st.markdown(get_table_download_link_csv(df_pivot), unsafe_allow_html=True)
-if st.button('Gerar XLSX'):
-    st.markdown(get_table_download_link_xlsx2(df_pivot), unsafe_allow_html=True)
+    def get_table_download_link_xlsx2(df):
+        """Generates a link allowing the data in a given panda dataframe to be downloaded
+        in:  dataframe
+        out: href string
+        """
+        val = to_excel(df)
+        b64 = base64.b64encode(val)  # val looks like b'...'
+        return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="Export_Orbita.xlsx">Baixar XLSX</a>' # decode b'abc' => abc
 
-#st.write("### Dados", df.head(20))
-st.write("### Dados", df_pivot.head(20))
+    if st.button('Gerar CSV'):
+        st.markdown(get_table_download_link_csv(df_pivot), unsafe_allow_html=True)
+    if st.button('Gerar XLSX'):
+        st.markdown(get_table_download_link_xlsx2(df_pivot), unsafe_allow_html=True)
 
-# df = df.T.reset_index()
-# df = pd.melt(df, id_vars=["index"]).rename(
-#     columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
-# )
-# chart = (
-#     alt.Chart(df)
-#     .mark_area(opacity=0.3)
-#     .encode(
-#         x="year:T",
-#         y=alt.Y("Gross Agricultural Product ($B):Q", stack=None),
-#         color="Region:N",
-#     )
-# )
-# st.altair_chart(chart, use_container_width=True)
+    #st.write("### Dados", df.head(20))
+    st.write("### Dados", df_pivot.head(20))
+
+    # df = df.T.reset_index()
+    # df = pd.melt(df, id_vars=["index"]).rename(
+    #     columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
+    # )
+    # chart = (
+    #     alt.Chart(df)
+    #     .mark_area(opacity=0.3)
+    #     .encode(
+    #         x="year:T",
+    #         y=alt.Y("Gross Agricultural Product ($B):Q", stack=None),
+    #         color="Region:N",
+    #     )
+    # )
+    # st.altair_chart(chart, use_container_width=True)
