@@ -13,8 +13,8 @@ import xlsxwriter
 #from io import BytesIO
 #from flask import send_file
 
-st.title("Export de tabela")
-st.markdown('v0.2.4')
+st.title("Crie sua tabela")
+st.markdown('v0.2.5')
 
 #@st.cache
 def get_UN_data():
