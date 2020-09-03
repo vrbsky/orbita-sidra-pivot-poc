@@ -7,14 +7,14 @@ import base64
 import requests
 from io import StringIO, BytesIO
 import base64
+import xlsxwriter
 
 #import openpyxl
-#import xlsxwriter
 #from io import BytesIO
 #from flask import send_file
 
 st.title("Export de tabela")
-st.markdown('v0.2.3')
+st.markdown('v0.2.4')
 
 #@st.cache
 def get_UN_data():
@@ -176,7 +176,7 @@ if valid_config:
         st.markdown(get_table_download_link_xlsx2(df_pivot), unsafe_allow_html=True)
 
     #st.write("### Dados", df.head(20))
-    st.write("### Dados", df_pivot.head(20))
+    st.write("### Dados", df_pivot.head(50))
 
     # df = df.T.reset_index()
     # df = pd.melt(df, id_vars=["index"]).rename(
