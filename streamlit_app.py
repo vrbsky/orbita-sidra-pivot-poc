@@ -8,13 +8,14 @@ import requests
 from io import StringIO, BytesIO
 import base64
 import xlsxwriter
+from itertools import compress
 
 #import openpyxl
 #from io import BytesIO
 #from flask import send_file
 
 st.title("Crie sua tabela")
-st.markdown('v0.2.5')
+st.markdown('v0.3.0')
 
 #@st.cache
 def get_UN_data():
@@ -37,7 +38,7 @@ def get_SIDRA_POC_table02():
 
 try:
     #df = get_UN_data()
-    df = get_SIDRA_POC_table02()
+    df = get_SIDRA_POC_table02().drop('mes',1)
 except urllib.error.URLError as e:
     st.error(
         """
@@ -49,61 +50,90 @@ except urllib.error.URLError as e:
     )
     #return
 
-st.markdown(
-"""
-Selecione as colunas e linhas
-""")
+# st.markdown(
+# """
+# Selecione as colunas e linhas
+# """)
 
 #df = df.T.reset_index()
 #df = pd.melt(df, id_vars=["index"]).rename(
 #    columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
 #)
 
+
 available_rows_columns = ['ano', 'uf', 'municipio', 'transferencia', 'item transferencia']
-value = '1o decendio'
+available_variables = ['1o decendio', '2o decendio', '3o decendio']
+#available_rows_columns = df.columns
+#is_not_value = [True]*len(df.columns)
+#is_value = [False]*len(df.columns)
+is_value = [False]*len(available_variables)
+st.markdown("#### Valores")
+#if True not in is_value:
+st.markdown('Escolhe ao menos 1 atributo como variável.')
+for i in range(len(available_variables)):
+    #c = df.columns[i]
+    #is_not_value[i] = not st.checkbox(c, False)
+    #is_value[i] = not is_not_value[i]
+    is_value[i] = st.checkbox(available_variables[i], False)
+
+#available_rows_columns = list(compress(available_rows_columns, is_not_value))
+values = list(compress(available_variables, is_value))
+
+#value = st.selectbox('Valor usado', values)
+#value = '1o decendio'
 #selected_columns = []
 #selected_rows = []
 
+st.markdown("#### Colunas e linhas")
+
 selected_columns = st.multiselect(
-    "Escolhe colunas", available_rows_columns#list(df.columns)#, [df.columns[0]]
+    "Colunas", available_rows_columns#list(df.columns)#, [df.columns[0]]
 )
 # if not selected_columns:
 #     st.error("Please select at least one column.")
 #     #return
 
 selected_rows = st.multiselect(
-    "Escolhe linhas", available_rows_columns#list(df.columns)#, [df.columns[1]]
+    "Linhas", available_rows_columns#list(df.columns)#, [df.columns[1]]
 )
 # if not selected_rows:
 #     st.error("Please select at least one row.")
 #     #return
 
-valid_config = True
+exists_intersection = False
+empty_complement = True
 
 complement = set(available_rows_columns)-set(selected_columns+selected_rows)
 if len(complement) > 0:
-    st.markdown(f"""#### Atributos a escolher
-{', '.join(complement)}
-""")
-    valid_config = False
+    st.markdown("#### Atributos para escolher\n"+('  \n'.join(complement)))
+    empty_complement = False
 
 intersection = set(selected_columns).intersection(set(selected_rows))
 if len(intersection) > 0:
     st.markdown(f"""#### Atributos não podem ser escolhidos como coluna e linha ao mesmo tempo
 {', '.join(intersection)}
 """)
-    valid_config = False
+    exists_intersection = True
 
     
-if valid_config:
-    df = df[selected_columns+selected_rows+[value]]
+if not exists_intersection and empty_complement:
+    #df = df[selected_columns+selected_rows+values]
     #df /= 1000000.0
     #df = df.T.reset_index()
-    df_pivot = df[selected_columns+selected_rows+['1o decendio']].pivot(
-        index=selected_rows,
+    #if not empty_complement:
+    df_pivot = df[selected_columns+selected_rows+values].pivot(
+        index=selected_rows if len(selected_rows)>0 else None,
         columns=selected_columns,
-        values="1o decendio"
+        values=values
     )
+    # else:
+    #     df_pivot = df.head(10000) \
+    #         .reset_index() \
+    #         .pivot(index=selected_rows+['index'], columns=selected_columns, values=values) \
+    #         .reset_index(level='index', drop=True)
+    #     #if multiindex: #Can only reorder levels on a hierarchical axis.
+    #     #    df_pivot = df_pivot.reorder_levels([*selected_columns,0], 1)
+
 
     #if st.button('Exportar Excel'):
         # df.to_excel(f'Export_Orbita_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx')
@@ -176,7 +206,7 @@ if valid_config:
         st.markdown(get_table_download_link_xlsx2(df_pivot), unsafe_allow_html=True)
 
     #st.write("### Dados", df.head(20))
-    st.write("### Dados", df_pivot.head(50))
+    st.write("### Tabela customizada", df_pivot.head(50))
 
     # df = df.T.reset_index()
     # df = pd.melt(df, id_vars=["index"]).rename(
