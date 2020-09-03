@@ -206,7 +206,7 @@ if not exists_intersection and empty_complement:
         st.markdown(get_table_download_link_xlsx2(df_pivot), unsafe_allow_html=True)
 
     #st.write("### Dados", df.head(20))
-    st.write("### Tabela customizada", df_pivot.head(50))
+    st.write("### Tabela customizada", df_pivot)#.head(50))
 
     # df = df.T.reset_index()
     # df = pd.melt(df, id_vars=["index"]).rename(
