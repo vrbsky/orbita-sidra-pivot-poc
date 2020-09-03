@@ -15,7 +15,7 @@ from itertools import compress
 #from flask import send_file
 
 st.title("Crie sua tabela")
-st.markdown('v0.3.0')
+#st.markdown('v0.3.0')
 
 #@st.cache
 def get_UN_data():
