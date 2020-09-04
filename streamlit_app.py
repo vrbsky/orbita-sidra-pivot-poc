@@ -154,6 +154,7 @@ st.markdown("### UF")
 ufs = df['uf'].unique()#.sort()
 use_uf = [False]*len(ufs)
 select_all_ufs = st.checkbox('Selecionar todos', True)
+st.text('')
 for i in range(len(ufs)):
     use_uf[i] = st.checkbox(str(ufs[i]), select_all_ufs)
 #st.text(use_uf)
