@@ -100,7 +100,7 @@ empty_complement = True
 
 complement = set(available_rows_columns)-set(selected_columns+selected_rows)
 if len(complement) > 0:
-    st.markdown("##### Dimensões obrigatórias para escolher como linha ou coluna:\n"+('  \n'.join(complement)))
+    st.markdown("##### Dimensões obrigatórias para escolher como coluna ou linha:\n"+('  \n'.join(complement)))
     empty_complement = False
 
 intersection = set(selected_columns).intersection(set(selected_rows))
