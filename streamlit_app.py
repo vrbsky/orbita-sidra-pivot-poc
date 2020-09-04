@@ -49,6 +49,7 @@ def get_SIDRA_POC_table02():
 try:
     #df = get_UN_data()
     df = get_SIDRA_POC_table02().drop('mes',1)
+    df['todos os decendios'] = df['1o decendio']+df['2o decendio']+df['3o decendio']
 except urllib.error.URLError as e:
     st.error(
         """
@@ -72,7 +73,7 @@ except urllib.error.URLError as e:
 
 
 available_rows_columns = ['ano', 'uf', 'municipio', 'transferencia', 'item transferencia']
-available_variables = ['1o decendio', '2o decendio', '3o decendio']
+available_variables = ['1o decendio', '2o decendio', '3o decendio', 'todos os decendios']
 #available_rows_columns = df.columns
 
 st.markdown(
@@ -149,7 +150,24 @@ if len(anos) == 0:
 
 df = df[df['ano'].isin(anos)]
     
-if not exists_intersection and empty_complement and variables_selected and years_selected:
+st.markdown("### UF")
+ufs = df['uf'].unique()#.sort()
+use_uf = [False]*len(ufs)
+select_all_ufs = st.checkbox('Selecionar todos', True)
+for i in range(len(ufs)):
+    use_uf[i] = st.checkbox(str(ufs[i]), select_all_ufs)
+#st.text(use_uf)
+
+ufs = list(compress(ufs, use_uf))
+ufs_selected = True
+if len(ufs) == 0:
+    st.markdown('##### Escolhe ao menos 1 UF.')
+    st.text('')
+    ufs_selected = False
+
+df = df[df['uf'].isin(ufs)]
+
+if not exists_intersection and empty_complement and variables_selected and years_selected and ufs_selected:
     #df = df[selected_columns+selected_rows+values]
     #df /= 1000000.0
     #df = df.T.reset_index()
