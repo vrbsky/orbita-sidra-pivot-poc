@@ -17,8 +17,8 @@ from itertools import compress
 st.title("Crie sua tabela")
 #st.markdown('v0.4.0')
 st.markdown(
-"""### Tesouro Transparente
-#### Transferências Constitucionais para Municípios
+"""### Tabela fonte
+#### Tesouro Transparente - Transferências Constitucionais para Municípios
 Parcela das receitas federais arrecadadas pela União é repassada aos Municípios. O rateio da receita proveniente da arrecadação de impostos entre os entes federados representa um mecanismo fundamental para amenizar as desigualdades regionais, na busca incessante de promover o equilíbrio sócio-econômico entre Estados.
 
 Cabe ao Tesouro Nacional, em cumprimento aos dispositivos constitucionais, efetuar as transferências desses recursos aos entes federados, nos prazos legalmente estabelecidos.
